@@ -15,6 +15,9 @@ import warnings
 warnings.filterwarnings('ignore')
 import joblib
 import streamlit as st
+from matplotlib.backends.backend_agg import RendererAgg
+_lock = RendererAgg.lock
+
 
 
 # %%
@@ -97,29 +100,30 @@ def plot_forecasts(forecast_data, df):
     n_series = len(df.columns)
     fig_n_lines = ceil(n_series/2)
     # fig, axs = plt.subplots(fig_n_lines, 2 if n_series>1 else 1, figsize=(20, fig_n_lines*4))
-    if n_series>1 : 
-        fig, axs = plt.subplots(fig_n_lines, 2, figsize=(20, fig_n_lines*4))
-        remove_axes(n_series, axs)
-        axs = axs.flatten()
-    else :
-        fig, axs = plt.subplots(fig_n_lines, 1, figsize=(15, 7))
-        axs = [axs]
+    with _lock:
+        if n_series>1 : 
+            fig, axs = plt.subplots(fig_n_lines, 2, figsize=(20, fig_n_lines*4))
+            remove_axes(n_series, axs)
+            axs = axs.flatten()
+        else :
+            fig, axs = plt.subplots(fig_n_lines, 1, figsize=(15, 7))
+            axs = [axs]
 
-    for i, item in enumerate(df.columns):
-        axs[i].plot(pd.concat([df[item], forecast_data['fc_df'][item]]), label="actual")
-        axs[i].plot(forecast_data['fc_df'][item], color='darkgreen', label="forecast")
-        axs[i].set_title(f"{item} forecast")
+        for i, item in enumerate(df.columns):
+            axs[i].plot(pd.concat([df[item], forecast_data['fc_df'][item]]), label="actual")
+            axs[i].plot(forecast_data['fc_df'][item], color='darkgreen', label="forecast")
+            axs[i].set_title(f"{item} forecast")
 
-        lower = forecast_data['lower_df'][item]
-        upper = forecast_data['upper_df'][item]
-        axs[i].plot(lower, "r--", label="upper bond / lower bond", alpha=0.5)
-        axs[i].plot(upper, "r--", alpha=0.5)
-        
-        axs[i].axvspan(lower.index[0], lower.index[-1],  color=sns.xkcd_rgb['grey'], alpha=0.2)
+            lower = forecast_data['lower_df'][item]
+            upper = forecast_data['upper_df'][item]
+            axs[i].plot(lower, "r--", label="upper bond / lower bond", alpha=0.5)
+            axs[i].plot(upper, "r--", alpha=0.5)
+            
+            axs[i].axvspan(lower.index[0], lower.index[-1],  color=sns.xkcd_rgb['grey'], alpha=0.2)
 
-        axs[i].legend(loc="best")
+            axs[i].legend(loc="best")
 
-    st.pyplot(fig)
+        st.pyplot(fig)
 
 
 
