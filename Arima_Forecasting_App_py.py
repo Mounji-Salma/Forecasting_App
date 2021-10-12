@@ -47,20 +47,22 @@ def auto_arima_for_df(df, trace: bool):
     return models
 
 # %%
-sales = pd.read_csv('https://raw.githubusercontent.com/Mounji-Salma/mirrored_Forecasting_Project/main/70prod_data.csv',\
+try:
+sales = pd.read_csv('70prod_data.csv',\
                     index_col=0, parse_dates=True)
 
+except FileNotFoundError:
+    st.write("NotFoundError")
+
 # %%
-joblib_Filename = "https://raw.githubusercontent.com/Mounji-Salma/mirrored_Forecasting_Project/main/joblib_ARIMA_sales_Models.joblib"
+joblib_Filename = "joblib_ARIMA_sales_Models.joblib"
+
 # if compress: joblib_Filename += '.z'
 try:
     models = joblib.load(joblib_Filename)
     print("models imported")
 except FileNotFoundError:
-    models = auto_arima_for_df(sales, trace=False) #fitting the model
-    joblib.dump(models, joblib_Filename)
-    print("models created and exported")
-
+    st.write("NotFoundError")
 
 
 # %%
