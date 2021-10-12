@@ -47,11 +47,11 @@ def auto_arima_for_df(df, trace: bool):
     return models
 
 # %%
-sales = pd.read_csv('70prod_data.csv',\
+sales = pd.read_csv('https://raw.githubusercontent.com/Mounji-Salma/mirrored_Forecasting_Project/main/70prod_data.csv',\
                     index_col=0, parse_dates=True)
 
 # %%
-joblib_Filename = "joblib_ARIMA_sales_Models.joblib"
+joblib_Filename = "https://raw.githubusercontent.com/Mounji-Salma/mirrored_Forecasting_Project/main/joblib_ARIMA_sales_Models.joblib"
 # if compress: joblib_Filename += '.z'
 try:
     models = joblib.load(joblib_Filename)
