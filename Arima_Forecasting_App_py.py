@@ -49,26 +49,36 @@ def auto_arima_for_df(df, trace: bool):
                               stepwise=True)
     return models
 
-# %%
-try:
-    sales = pd.read_csv('https://raw.githubusercontent.com/Mounji-Salma/mirrored_Forecasting_Project/main/70prod_data.csv', index_col=0, parse_dates=True)
-    print("data imported")
-except FileNotFoundError:
-    st.write("NotFoundError")
-    raise
+@st.cache
+def import_data(path):
+    try:
+        sales = pd.read_csv(path, index_col=0, parse_dates=True)
+        print("data imported")
+    except FileNotFoundError:
+        st.write("NotFoundError")
+        raise
+    return sales
+
+sales = import_data('70prod_data.csv')
 
 # %%
 
-from urllib.request import urlopen
-#joblib_Filename = "joblib_ARIMA_sales_Models.joblib"
 
-# if compress: joblib_Filename += '.z'
-try:
-    models = joblib.load(urlopen("https://raw.githubusercontent.com/Mounji-Salma/mirrored_Forecasting_Project/main/joblib_ARIMA_sales_Models.joblib"))
-    print("models imported")
-except FileNotFoundError:
-    st.write("NotFoundError")
-    raise
+def hash_joblib_reference(file_reference):
+    return True
+
+@st.cache(hash_funcs={dict: hash_joblib_reference})
+def import_models(path):
+    try:
+        models = joblib.load(path)
+        print(type(models))
+        print("models imported")
+        return models
+    except FileNotFoundError:
+        st.write("NotFoundError")
+        raise
+
+models = import_models("joblib_ARIMA_sales_Models.joblib")
 
 
 # %%
@@ -128,8 +138,7 @@ def plot_forecasts(forecast_data, df):
 
 
 # %%
-st.set_page_config(page_title='Sales Forcasting App',
-    layout='wide')
+# st.set_page_config(page_title='Sales Forcasting App', layout='wide')
 
 st.write("# Sales Forcasting App")
 # Sidebar - Collects user input features into dataframe
@@ -154,6 +163,8 @@ with st.sidebar:
     last_train_date = dates[dates.index(selected_date) - 1]
     train_df=sales.loc[:last_train_date, selected_products]
     n_periods = st.sidebar.slider('Select number of months :', 1, 24, 6, 1)
+    n_periods += 1
+    st.write(f"Forecasting from {selected_date} to {pd.date_range(selected_date, freq='M', periods=n_periods).astype(str)[-1]}")
 
 import base64  
 def get_table_download_link(df):
@@ -169,16 +180,35 @@ def get_table_download_link(df):
 import itertools
 
 if st.sidebar.button('ok') : 
-    res = arima_dynamic_out_of_sample_forecast(models, train_df, n_periods)
-    pred_df = pd.DataFrame(columns=list(itertools.chain.from_iterable([[col+'_Forecast', col+'_LowerB', col+'_UpperB'] for col in train_df.columns])), index = res['fc_df'].index)
-    for col in train_df.columns:
-        pred_df[col+'_Forecast'] = res['fc_df'][col]
-        pred_df[col+'_LowerB'] = res['lower_df'][col]
-        pred_df[col+'_UpperB'] = res['upper_df'][col]
-    pred_df.index = pred_df.index.astype(str)
-    st.dataframe(pred_df)
-    st.markdown(get_table_download_link(pred_df), unsafe_allow_html=True)
-    plot_forecasts(res, train_df)
+    if len(selected_products)==0 or n_periods<1:
+        """
+        ---
+        ### Veuillez choisir au moins un produit et un mois !"""
+    else:
+        res = arima_dynamic_out_of_sample_forecast(models, train_df, n_periods)
+        pred_df = pd.DataFrame(columns=list(itertools.chain.from_iterable([[col+'_Forecast', col+'_LowerB', col+'_UpperB'] for col in train_df.columns])), index = res['fc_df'].index)
+        for col in train_df.columns:
+            pred_df[col+'_Forecast'] = res['fc_df'][col]
+            pred_df[col+'_LowerB'] = res['lower_df'][col]
+            pred_df[col+'_UpperB'] = res['upper_df'][col]
+        pred_df.index = pred_df.index.astype(str)
+        st.dataframe(pred_df.iloc[:-1])
+        st.markdown(get_table_download_link(pred_df), unsafe_allow_html=True)
+        plot_forecasts(res, train_df)
+else:
+    """
+    Cette application est la partie finale du projet réalisé sur:  [Étude prévisionnelle de la demande des produits pharmaceutiques](https://abdelgha-4.github.io/Portfolio/post/projet1/ )
+    
+    Après la présentation des résultats obtenu, les décideurs de l'entreprise ont conclu que les modèles statistiques tels que ARIMA sont préférés dans le contexte de leurs industrie, elle présente un outil de prévision pratique, simple et rapide à calculer, et souvent facile à interpréter, et donc fournit de l’informations précieuse aux décideurs.
+    
+    Cette application web interactive a été élaboré pour simuler l'utilisation des modèles ARIMA pour prévoir les ventes des produits selon l'échantillon de données disponible, elle peut être déployé au système interne après qu'elle sera liée à la base de données principale.
+    
+    **Pour l'utiliser, il suffit de suivre ses étapes:**
+    
+    1. Choisir les produits dont vous voulez prévoir ses ventes.
+    2. Choisir la date actuelle et la durée souhaitée pour la prévision.
+    3. Cliquer sur 'OK' pour effectuer les prévisions. vous pouvez voir la présentation visuelle de résultat, ou le télécharger sous forme de table csv.
+    """
 
 # %%
 
