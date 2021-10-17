@@ -51,7 +51,8 @@ def auto_arima_for_df(df, trace: bool):
 
 # %%
 try:
-    sales = pd.read_csv('https://raw.githubusercontent.com/Mounji-Salma/mirrored_Forecasting_Project/main/70prod_data.csv', index_col=0, parse_dates=True)
+    #sales = pd.read_csv('https://raw.githubusercontent.com/Mounji-Salma/mirrored_Forecasting_Project/main/70prod_data.csv', index_col=0, parse_dates=True)
+    sales = pd.read_csv('70prod_data.csv', index_col=0, parse_dates=True)
     print("data imported")
 except FileNotFoundError:
     st.write("NotFoundError")
@@ -64,7 +65,8 @@ from urllib.request import urlopen
 
 # if compress: joblib_Filename += '.z'
 try:
-    models = joblib.load(urlopen("https://raw.githubusercontent.com/Mounji-Salma/mirrored_Forecasting_Project/main/joblib_ARIMA_sales_Models.joblib"))
+    #models = joblib.load(urlopen("https://raw.githubusercontent.com/Mounji-Salma/mirrored_Forecasting_Project/main/joblib_ARIMA_sales_Models.joblib"))
+    models = joblib.load("joblib_ARIMA_sales_Models.joblib")
     print("models imported")
 except FileNotFoundError:
     st.write("NotFoundError")
