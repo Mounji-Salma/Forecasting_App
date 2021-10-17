@@ -50,27 +50,35 @@ def auto_arima_for_df(df, trace: bool):
     return models
 
 # %%
-try:
-    #sales = pd.read_csv('https://raw.githubusercontent.com/Mounji-Salma/mirrored_Forecasting_Project/main/70prod_data.csv', index_col=0, parse_dates=True)
-    sales = pd.read_csv('70prod_data.csv', index_col=0, parse_dates=True)
-    print("data imported")
-except FileNotFoundError:
-    st.write("NotFoundError")
-    raise
+@st.cache
+def import_data(path):
+    try:
+        sales = pd.read_csv(path, index_col=0, parse_dates=True)
+        print("data imported")
+    except FileNotFoundError:
+        st.write("NotFoundError")
+        raise
+    return sales
+
+sales = import_data('70prod_data.csv')
 
 # %%
 
-from urllib.request import urlopen
-#joblib_Filename = "joblib_ARIMA_sales_Models.joblib"
+def hash_joblib_reference(file_reference):
+    return True
 
-# if compress: joblib_Filename += '.z'
-try:
-    #models = joblib.load(urlopen("https://raw.githubusercontent.com/Mounji-Salma/mirrored_Forecasting_Project/main/joblib_ARIMA_sales_Models.joblib"))
-    models = joblib.load("joblib_ARIMA_sales_Models.joblib")
-    print("models imported")
-except FileNotFoundError:
-    st.write("NotFoundError")
-    raise
+@st.cache(hash_funcs={dict: hash_joblib_reference})
+def import_models(path):
+    try:
+        models = joblib.load(path)
+        print(type(models))
+        print("models imported")
+        return models
+    except FileNotFoundError:
+        st.write("NotFoundError")
+        raise
+
+models = import_models("joblib_ARIMA_sales_Models.joblib")
 
 
 # %%
@@ -130,8 +138,7 @@ def plot_forecasts(forecast_data, df):
 
 
 # %%
-st.set_page_config(page_title='Sales Forcasting App',
-    layout='wide')
+# st.set_page_config(page_title='Sales Forcasting App', layout='wide')
 
 st.write("# Sales Forcasting App")
 # Sidebar - Collects user input features into dataframe
